@@ -40,6 +40,11 @@ pages				iso.3.6.1.2.1.43.10.2.1.4.1
 @consumable_name	iso.3.6.1.2.1.43.11.1.1.6.1
 @consumable_max		iso.3.6.1.2.1.43.11.1.1.8.1
 @consumable_curr	iso.3.6.1.2.1.43.11.1.1.9.1
+@tray_max			iso.3.6.1.2.1.43.8.2.1.9.1
+@tray_capacity		iso.3.6.1.2.1.43.8.2.1.10.1
+@tray_name			iso.3.6.1.2.1.43.8.2.1.13.1
+@tray_dim_x			iso.3.6.1.2.1.43.8.2.1.4.1
+@tray_dim_y			iso.3.6.1.2.1.43.8.2.1.5.1
 ];
 
 my $oid2name;
