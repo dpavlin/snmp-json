@@ -5,6 +5,8 @@ use strict;
 use SNMP::Multi;
 use Data::Dump qw(dump);
 
+my $debug = $ENV{DEBUG} || 0; 
+
 my $community = 'public';
 my @printers = qw(
 10.60.3.15
@@ -28,27 +30,34 @@ my @printers = qw(
 
 @printers = @ARGV if @ARGV;
 
+# remove final .1 since we are using bulkwalk to get values!
 my %vars = qw[
-model		.1.3.6.1.2.1.25.3.2.1.3.1
-serial		.1.3.6.1.2.1.43.5.1.1.17
-pages		.1.3.6.1.2.1.43.10.2.1.4.1.1
-@message	.1.3.6.1.2.1.43.18.1.1.8
-@message	.1.3.6.1.2.1.43.16
-@consumable_name	.1.3.6.1.2.1.43.11.1.1.6.1
-@consumable_max		.1.3.6.1.2.1.43.11.1.1.8.1
-@consumable_curr	.1.3.6.1.2.1.43.11.1.1.9.1
+info				iso.3.6.1.2.1.1.1.0
+name				iso.3.6.1.2.1.43.5.1.1.16.1
+serial				iso.3.6.1.2.1.43.5.1.1.17.1
+pages				iso.3.6.1.2.1.43.10.2.1.4.1
+@message			iso.3.6.1.2.1.43.18.1.1.8
+@consumable_name	iso.3.6.1.2.1.43.11.1.1.6.1
+@consumable_max		iso.3.6.1.2.1.43.11.1.1.8.1
+@consumable_curr	iso.3.6.1.2.1.43.11.1.1.9.1
 ];
 
-my @oids = sort { length $a <=> length $b } values %vars;
 my $oid2name;
-$oid2name->{ $vars{$_} } = $_ foreach keys %vars;
+my @vars;
+while ( my ($name,$oid) = each %vars ) {
+	$oid =~ s/\.[0-1]$// if $name !~ /^\@/;
+	push @vars, [ $oid ];
+	$oid2name->{$oid} = $name;
+}
+my @oids = sort { length $a <=> length $b } keys %$oid2name;
+warn "# vars = ",dump(@vars) if $debug;
 
 my $sm = SNMP::Multi->new(
 	Method    => 'bulkwalk',
 	Community => $community,
 	Requests  => SNMP::Multi::VarReq->new(
 		hosts => [ @printers ],
-		vars  => [ map { [ $_ ] } values %vars ],
+		vars  => [ @vars ],
     ),
 	Timeout     => 1,
 	Retries     => 0,
@@ -67,10 +76,11 @@ foreach my $host ( $resp->hosts ) {
 			next;
 		}
 
+		warn "## result = ", dump($result) if $debug;
+
 		foreach my $v ( $result->varlists ) {
 			foreach my $i ( @$v ) {
 				my ( $oid, undef, $val, $fmt ) = @$i;
-				$oid =~ s/^iso/.1/;
 				if ( my $name = $oid2name->{$oid} ) {
 					$status->{$name} = $val;
 				} else {
@@ -83,7 +93,7 @@ foreach my $host ( $resp->hosts ) {
 						}
 					}
 
-					my $name = $oid2name->{$oid_base} || die "no name for $oid_base in ",dump( $oid2name );
+					my $name = $oid2name->{$oid_base} || die "no name for $oid in ",dump( $oid2name );
 					if ( $name =~ s/^\@// ) {
 						push @{ $status->{$name} }, $val;
 					} else {
