@@ -5,6 +5,9 @@ use strict;
 use SNMP::Multi;
 use Data::Dump qw(dump);
 
+use JSON;
+my $json;
+
 my $debug = $ENV{DEBUG} || 0; 
 
 my $community = 'public';
@@ -72,6 +75,8 @@ warn "# working on: ", join(' ', @printers),$/;
 
 my $resp = $sm->execute() or die $sm->error();
 
+my $collected;
+
 foreach my $host ( $resp->hosts ) {
 	my $status;
 
@@ -119,5 +124,15 @@ foreach my $host ( $resp->hosts ) {
 	}
 
 	print "$host = ",dump($status);
+	$collected->{$host} = $status;
 }
 
+# generate json
+my $json;
+foreach my $ip ( sort keys %$collected ) {
+	my $status = $collected->{$ip};
+	$status->{ip} = $ip;	
+	push @$json, $status;
+}
+open(my $fh, '>', 'printer.json');
+print $fh encode_json $json;
