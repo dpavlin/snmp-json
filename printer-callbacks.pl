@@ -5,6 +5,27 @@ use strict;
 use Net::SNMP;
 use Data::Dump qw(dump);
 
+my $dir = 'public/json/monitor/printers/';
+$dir = "/tmp/printers-" unless -d $dir;
+
+use JSON;
+sub save_json {
+	my ( $ip, $json ) = @_;
+	my $path = $dir . $ip;
+	open(my $fh, '>', $path) || die "$path: $!";
+	print $fh encode_json $json;
+	close($fh);
+	warn "# $path ", -s $path, " bytes\n";
+}
+
+sub iso_datetime {
+	my ($ss,$mm,$hh,$d,$m,$y) = localtime(time);
+	return sprintf "%04d-%02d-%02dT%02d:%02d:%02d", $y+1900, $m, $d, $hh, $mm, $ss;
+}
+
+my $log_path = join('.', $dir, (split(/T/,iso_datetime,2))[0], 'json');
+open(my $log, '>>', $log_path) || die "$log_path: $!";
+
 my $community = 'public';
 my @printers = qw(
 10.60.0.20
@@ -73,6 +94,8 @@ warn "++ $oid $name $var\n";
 	}
 
 	warn "## $ip response ",dump($response->{$ip});
+	save_json $ip => $response->{$ip};
+	print $log encode_json($response->{$ip}),"\n";
 }
 
 foreach my $host ( @printers ) {
@@ -129,3 +152,7 @@ foreach my $ip ( keys %$response ) {
 
 	print "$ip ",dump($status);
 }
+
+close($log);
+warn "# log $log_path ", -s $log_path, " bytes\n";
+
