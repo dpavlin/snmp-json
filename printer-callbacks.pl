@@ -47,6 +47,7 @@ sub columns_cb {
 
 	warn "# $oid $name var_bind_list ", dump( $session->var_bind_list );
 	my $results = $session->var_bind_list;
+	# oid_lex_sort would be wonderfull to use here, but it doesn't work
 	foreach my $r_oid ( sort {
 			my ($af,$bf) = ($a,$b);
 			$af =~ s{\.(\d+)$}{sprintf("%03d",$1)}eg;
