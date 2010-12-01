@@ -23,14 +23,14 @@ hostname			iso.3.6.1.2.1.43.5.1.1.16.1
 serial				iso.3.6.1.2.1.43.5.1.1.17.1
 pages				iso.3.6.1.2.1.43.10.2.1.4.1
 @message			iso.3.6.1.2.1.43.18.1.1.8
-@consumable_name	iso.3.6.1.2.1.43.11.1.1.6.1
-@consumable_max		iso.3.6.1.2.1.43.11.1.1.8.1
-@consumable_curr	iso.3.6.1.2.1.43.11.1.1.9.1
-@tray_dim_x			iso.3.6.1.2.1.43.8.2.1.4.1
-@tray_dim_y			iso.3.6.1.2.1.43.8.2.1.5.1
-@tray_max			iso.3.6.1.2.1.43.8.2.1.9.1
-@tray_capacity		iso.3.6.1.2.1.43.8.2.1.10.1
-@tray_name			iso.3.6.1.2.1.43.8.2.1.13.1
+@consumable.name	iso.3.6.1.2.1.43.11.1.1.6.1
+@consumable.max		iso.3.6.1.2.1.43.11.1.1.8.1
+@consumable.curr	iso.3.6.1.2.1.43.11.1.1.9.1
+@tray.dim_x			iso.3.6.1.2.1.43.8.2.1.4.1
+@tray.dim_y			iso.3.6.1.2.1.43.8.2.1.5.1
+@tray.max			iso.3.6.1.2.1.43.8.2.1.9.1
+@tray.capacity		iso.3.6.1.2.1.43.8.2.1.10.1
+@tray.name			iso.3.6.1.2.1.43.8.2.1.13.1
 ];
 
 our $response;
@@ -95,4 +95,16 @@ foreach my $host ( @printers ) {
 warn "# dispatch requests for ",dump(@printers);
 snmp_dispatcher;
 
-print dump($response);
+foreach my $ip ( keys %$response ) {
+
+	my $status = $response->{$ip};
+	foreach my $group ( grep { /\w+\.\w+/ } keys %$status ) {
+		my ( $prefix,$name ) = split(/\./,$group,2);
+		foreach my $i ( 0 .. $#{ $status->{$group} } ) {
+			$status->{$prefix}->[$i]->{$name} = $status->{$group}->[$i];
+		}
+		delete $status->{$group};
+	}
+
+	print "$ip ",dump($status);
+}
