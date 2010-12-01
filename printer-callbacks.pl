@@ -23,7 +23,7 @@ hostname			iso.3.6.1.2.1.43.5.1.1.16.1
 serial				iso.3.6.1.2.1.43.5.1.1.17.1
 pages				iso.3.6.1.2.1.43.10.2.1.4.1
 @message			iso.3.6.1.2.1.43.18.1.1.8
-@consumable_name	iso.3.6.1.2.1.43.11.1.1.6.1.1
+@consumable_name	iso.3.6.1.2.1.43.11.1.1.6.1
 @consumable_max		iso.3.6.1.2.1.43.11.1.1.8.1
 @consumable_curr	iso.3.6.1.2.1.43.11.1.1.9.1
 @tray_dim_x			iso.3.6.1.2.1.43.8.2.1.4.1
