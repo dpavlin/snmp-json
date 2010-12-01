@@ -36,17 +36,20 @@ pages				iso.3.6.1.2.1.43.10.2.1.4.1
 our $response;
 
 sub columns_cb {
-	my ( $session, $oid, $name ) = @_;
+	my ( $session, $oid2name ) = @_;
+
+	my $ip = $session->hostname;
 
 	if ( ! defined $session->var_bind_list ) {
-		warn "ERROR: ",$session->hostname, " $oid $name ", $session->error, "\n";
+		warn "ERROR: $ip ", $session->error, "\n";
 		warn dump($session);
 		return;
 	}
 
 
-	warn "# $oid $name var_bind_list ", dump( $session->var_bind_list );
+	warn "# $ip var_bind_list ", dump( $session->var_bind_list );
 	my $results = $session->var_bind_list;
+	$response->{$ip} = { ip => $ip, utime => time() };
 	# oid_lex_sort would be wonderfull to use here, but it doesn't work
 	foreach my $r_oid ( sort {
 			my ($af,$bf) = ($a,$b);
@@ -55,14 +58,21 @@ sub columns_cb {
 			$af cmp $bf
 	} keys %$results ) {
 		my $var = $results->{$r_oid};
+		my $oid = (grep {
+			substr($r_oid,0,length($_)) eq $_
+		} keys %$oid2name)[0] || die "no name for $r_oid in ",dump($oid2name);
+		my $name = $oid2name->{$oid};
+warn "++ $oid $name $var\n";
 		if ( $name =~ m{^\@} ) {
 			my $no_prefix = $name;
 			$no_prefix =~ s{^\@}{};
-			push @{ $response->{ $session->hostname }->{ $no_prefix } }, $var;
+			push @{ $response->{$ip}->{ $no_prefix } }, $var;
 		} else {
-			$response->{ $session->hostname }->{ $name } = $var;
+			$response->{$ip}->{ $name } = $var;
 		}
 	}
+
+	warn "## $ip response ",dump($response->{$ip});
 }
 
 foreach my $host ( @printers ) {
@@ -81,15 +91,21 @@ foreach my $host ( @printers ) {
 		next;
 	}
 
+	my @columns;
+	my @vars;
+	my $oid2name;
 	while ( my ($name,$oid) = each %vars ) {
 		warn "# $name $oid\n";
 		$oid =~ s{^iso}{.1};
 		if ( $name =~ m/^\@/ ) {
-			$snmp->get_entries( -columns => [ $oid ], -callback => [ \&columns_cb, $oid, $name ] );
+			push @columns, $oid;
 		} else {
-			$snmp->get_request( -varbindlist => [ $oid ], -callback => [ \&columns_cb, $oid, $name ] );
+			push @vars, $oid;
 		}
+		$oid2name->{$oid} = $name;
 	}
+	$snmp->get_request( -varbindlist => [ @vars ], -callback => [ \&columns_cb, $oid2name ] );
+	$snmp->get_entries( -columns =>  [ @columns ], -callback => [ \&columns_cb, $oid2name ] );
 
 }
 
@@ -101,8 +117,12 @@ foreach my $ip ( keys %$response ) {
 	my $status = $response->{$ip};
 	foreach my $group ( grep { /\w+\.\w+/ } keys %$status ) {
 		my ( $prefix,$name ) = split(/\./,$group,2);
-		foreach my $i ( 0 .. $#{ $status->{$group} } ) {
-			$status->{$prefix}->[$i]->{$name} = $status->{$group}->[$i];
+		if ( ref $status->{$group} eq 'ARRAY' ) { # some consumables are non-repeatable on low-end devices
+			foreach my $i ( 0 .. $#{ $status->{$group} } ) {
+				$status->{$prefix}->[$i]->{$name} = $status->{$group}->[$i];
+			}
+		} else {
+			$status->{$prefix}->[0]->{$name} = $status->{$group};
 		}
 		delete $status->{$group};
 	}
