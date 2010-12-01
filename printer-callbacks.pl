@@ -47,12 +47,19 @@ sub columns_cb {
 
 	warn "# $oid $name var_bind_list ", dump( $session->var_bind_list );
 	my $results = $session->var_bind_list;
-	while ( my ($r_oid,$val) = each %$results ) {
+	foreach my $r_oid ( sort {
+			my ($af,$bf) = ($a,$b);
+			$af =~ s{\.(\d+)$}{sprintf("%03d",$1)}eg;
+			$bf =~ s{\.(\d+)$}{sprintf("%03d",$1)}eg;
+			$af cmp $bf
+	} keys %$results ) {
+		my $var = $results->{$r_oid};
 		if ( $name =~ m{^\@} ) {
-			my $offset = $1 - 1 if $r_oid =~ m{^\Q$oid\E\.?(\d+)};
-			$response->{ $session->hostname }->{ $name }->[ $offset ] = $results->{$r_oid};
+			my $no_prefix = $name;
+			$no_prefix =~ s{^\@}{};
+			push @{ $response->{ $session->hostname }->{ $no_prefix } }, $var;
 		} else {
-			$response->{ $session->hostname }->{ $name } = $results->{$r_oid};
+			$response->{ $session->hostname }->{ $name } = $var;
 		}
 	}
 }
