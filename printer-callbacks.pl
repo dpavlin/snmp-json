@@ -83,7 +83,6 @@ sub columns_cb {
 			substr($r_oid,0,length($_)) eq $_
 		} keys %$oid2name)[0] || die "no name for $r_oid in ",dump($oid2name);
 		my $name = $oid2name->{$oid};
-warn "++ $oid $name $var\n";
 		if ( $name =~ m{^\@} ) {
 			my $no_prefix = $name;
 			$no_prefix =~ s{^\@}{};
@@ -94,8 +93,6 @@ warn "++ $oid $name $var\n";
 	}
 
 	warn "## $ip response ",dump($response->{$ip});
-	save_json $ip => $response->{$ip};
-	print $log encode_json($response->{$ip}),"\n";
 }
 
 foreach my $host ( @printers ) {
@@ -151,6 +148,8 @@ foreach my $ip ( keys %$response ) {
 	}
 
 	print "$ip ",dump($status);
+	save_json $ip => $response->{$ip};
+	print $log encode_json($response->{$ip}),"\n";
 }
 
 close($log);
