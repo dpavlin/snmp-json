@@ -42,7 +42,7 @@ my %vars = qw[
 info				iso.3.6.1.2.1.1.1.0
 hostname			iso.3.6.1.2.1.43.5.1.1.16.1
 serial				iso.3.6.1.2.1.43.5.1.1.17.1
-pages				iso.3.6.1.2.1.43.10.2.1.4.1
+pages				iso.3.6.1.2.1.43.10.2.1.4.1.1
 @message			iso.3.6.1.2.1.43.18.1.1.8
 @consumable.name	iso.3.6.1.2.1.43.11.1.1.6.1
 @consumable.max		iso.3.6.1.2.1.43.11.1.1.8.1
@@ -70,7 +70,8 @@ sub columns_cb {
 
 	warn "# $ip var_bind_list ", dump( $session->var_bind_list );
 	my $results = $session->var_bind_list;
-	$response->{$ip} = { ip => $ip, utime => time() };
+	$response->{$ip}->{ip} ||= $ip;
+	$response->{$ip}->{utime} ||= time();
 	# oid_lex_sort would be wonderfull to use here, but it doesn't work
 	foreach my $r_oid ( sort {
 			my ($af,$bf) = ($a,$b);

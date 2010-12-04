@@ -1,0 +1,10 @@
+SNMP JSON - pull data from SNMP into JSON
+
+My experiments with Net::SNMP and pulling data from
+devices (printers mostly) and converting them to JSON
+for easy web interfaces of analysis.
+
+
+show all snmp values available in printer:
+
+	snmpwalk -c public -v 1 10.60.3.15
