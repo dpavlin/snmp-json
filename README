@@ -1,0 +1,5 @@
+SNMP JSON - pull data from SNMP into JSON
+
+show all snmp values available in printer:
+
+	snmpwalk -c public -v 1 10.60.3.15
