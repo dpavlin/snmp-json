@@ -23,7 +23,9 @@ sub iso_datetime {
 	return sprintf "%04d-%02d-%02dT%02d:%02d:%02d", $y+1900, $m, $d, $hh, $mm, $ss;
 }
 
-my $log_path = join('.', $dir . (split(/T/,iso_datetime,2))[0], 'json');
+my $log_path = $dir;
+$log_path =~ s{/$}{};
+$log_path = join('.', $log_path, (split(/T/,iso_datetime,2))[0], 'json');
 open(my $log, '>>', $log_path) || die "$log_path: $!";
 
 my $community = 'public';
