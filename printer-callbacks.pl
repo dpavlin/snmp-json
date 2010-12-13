@@ -102,7 +102,7 @@ foreach my $host ( @printers ) {
 
 	my ( $snmp, $err ) = Net::SNMP->session(
 		-hostname => $host,
-		-version => 1,
+		-version => $host eq '10.60.0.20' ? 2 : 1,	# FIXME HP5550 doesn't return all consumables over SNMPv1
 		-community => $community,
 		-timeout => 2,
 		-retries => 0,
