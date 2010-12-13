@@ -42,6 +42,7 @@ my @printers = qw(
 
 my %vars = qw[
 info				iso.3.6.1.2.1.1.1.0
+model				iso.3.6.1.2.1.25.3.2.1.3.1
 hostname			iso.3.6.1.2.1.43.5.1.1.16.1
 serial				iso.3.6.1.2.1.43.5.1.1.17.1
 pages				iso.3.6.1.2.1.43.10.2.1.4.1.1
